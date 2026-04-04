@@ -109,4 +109,57 @@ public class ExpenseService {
                 .categoryName(entity.getCategory()!=null?entity.getCategory().getName():"N/A")
                 .build();
     }
+
+    public byte[] downloadExpenseDetails() {
+        List<ExpenseDTO> expenses = getCurrentMonthExpensesForCurrentUser();
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append("Date,Name,Category,Amount\n");
+        for (ExpenseDTO expense : expenses) {
+            csvContent.append(expense.getDate()).append(",")
+                    .append(expense.getName()).append(",")
+                    .append(expense.getCategoryName()).append(",")
+                    .append(expense.getAmount()).append("\n");
+        }
+        return csvContent.toString().getBytes();
+    }
+
+    public ExpenseDTO updateExpense(Long expenseId, ExpenseDTO dto) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        ExpenseEntiity expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+
+        if (!expense.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Unauthorized to update this expense");
+        }
+
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        expense.setName(dto.getName());
+        expense.setAmount(dto.getAmount());
+        expense.setDate(dto.getDate());
+        expense.setCategory(category);
+        expense.setIcon(dto.getIcon());
+
+        ExpenseEntiity updatedExpense = expenseRepository.save(expense);
+        return toDTO(updatedExpense);
+    }
+
+    private final EmailService emailService;
+
+    public void sendExpenseDetailsByEmail() {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        String toEmail = profile.getEmail(); 
+        
+        if(toEmail == null || toEmail.isEmpty()){
+             throw new RuntimeException("User email not found");
+        }
+
+        byte[] cvsData = downloadExpenseDetails();
+        
+        String subject = "Your Monthly Expense Report";
+        String body = "<h1>Expense Report</h1><p>Please find attached your expense details for the current month.</p>";
+        
+        emailService.sendEmailWithAttachment(toEmail, subject, body, cvsData, "expense_details.csv");
+    }
 }

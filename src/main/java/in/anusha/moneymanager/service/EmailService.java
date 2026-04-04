@@ -33,4 +33,22 @@ public class EmailService {
         }
 
     }
+    public void sendEmailWithAttachment(String to, String subject, String body, byte[] attachmentData, String attachmentName) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, true);
+
+            // Add attachment
+            helper.addAttachment(attachmentName, new org.springframework.core.io.ByteArrayResource(attachmentData));
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send email with attachment: " + e.getMessage());
+        }
+    }
 }

@@ -100,4 +100,57 @@ public class IncomeService {
                 .categoryName(entity.getCategory()!=null?entity.getCategory().getName():"N/A")
                 .build();
     }
+
+    public byte[] downloadIncomeDetails() {
+        List<IncomeDTO> incomes = getCurrentMonthIncomesForCurrentUser();
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append("Date,Name,Category,Amount\n");
+        for (IncomeDTO income : incomes) {
+            csvContent.append(income.getDate()).append(",")
+                    .append(income.getName()).append(",")
+                    .append(income.getCategoryName()).append(",")
+                    .append(income.getAmount()).append("\n");
+        }
+        return csvContent.toString().getBytes();
+    }
+
+    public IncomeDTO updateIncome(Long incomeId, IncomeDTO dto) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        IncomeEntity income = incomeRepository.findById(incomeId)
+                .orElseThrow(() -> new RuntimeException("Income not found"));
+
+        if (!income.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Unauthorized to update this income");
+        }
+
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        income.setName(dto.getName());
+        income.setAmount(dto.getAmount());
+        income.setDate(dto.getDate());
+        income.setCategory(category);
+        income.setIcon(dto.getIcon());
+
+        IncomeEntity updatedIncome = incomeRepository.save(income);
+        return toDTO(updatedIncome);
+    }
+
+    private final EmailService emailService;
+
+    public void sendIncomeDetailsByEmail() {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        String toEmail = profile.getEmail(); 
+        
+        if(toEmail == null || toEmail.isEmpty()){
+             throw new RuntimeException("User email not found");
+        }
+
+        byte[] cvsData = downloadIncomeDetails();
+        
+        String subject = "Your Monthly Income Report";
+        String body = "<h1>Income Report</h1><p>Please find attached your income details for the current month.</p>";
+        
+        emailService.sendEmailWithAttachment(toEmail, subject, body, cvsData, "income_details.csv");
+    }
 }
