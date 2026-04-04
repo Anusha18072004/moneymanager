@@ -35,7 +35,7 @@ public class ProfileController {
     public ResponseEntity<Map<String,Object>> login(@RequestBody AuthDTO authDTO){
         try {
             if (!profileService.isAccountActive(authDTO.getEmail())){
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message","Account is not) activated. Please activate your account."));
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message","Account is not activated. Please activate your account."));
             }
             Map<String,Object> response = profileService.authenticateAndGenerateToken(authDTO);
             return ResponseEntity.ok(response);
@@ -44,8 +44,9 @@ return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message",e.get
             }
     }
 
-    @GetMapping("/test")
-    public String test(){
-        return "Test Successful";
+    @GetMapping("/profile")
+    public ResponseEntity<ProfileDTO> getPublicProfile(){
+         ProfileDTO profileDTO =profileService.getPublicProfile(null);
+         return ResponseEntity.ok(profileDTO);
     }
 }

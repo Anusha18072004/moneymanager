@@ -57,6 +57,7 @@ public class CategoryService {
                 .id(categoryDTO.getId())
                 .name(categoryDTO.getName())
                 .type(categoryDTO.getType())
+                .icon(categoryDTO.getIcon())
                 .profile(profile)
                 .build();
     }

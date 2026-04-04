@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
+
+body {
+  font-family: "Outfit", sans-serif;
+  background-color: #fcfbfc;
+  overflow-x: hidden;
+}
+
+@layer components {
+  .btn-primary {
+    @apply w-full py-2.5 rounded text-sm font-medium text-white bg-indigo-900 hover:bg-indigo-800 transition-colors shadow-lg shadow-purple-200 uppercase tracking-wide cursor-pointer;
+  }
+}
